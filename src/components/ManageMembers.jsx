@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import * as api from '../api/sheets';
 import ConfirmModal from './ConfirmModal';
-import Toast from './Toast';
+import SuccessModal from './SuccessModal';
 
 export default function ManageMembers({ members, onUpdate }) {
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editName, setEditName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
+  const [successMsg, setSuccessMsg] = useState('');
 
   const addMember = async () => {
     const name = newName.trim();
     if (!name) return;
     await api.addMember(name);
     setNewName('');
-    setToast({ open: true, message: `${name} added to team!`, type: 'success' });
+    setSuccessMsg(`${name} added to team!`);
     onUpdate();
   };
 
@@ -29,7 +29,7 @@ export default function ManageMembers({ members, onUpdate }) {
     await api.updateMember(editingId, editName.trim());
     setEditingId(null);
     setEditName('');
-    setToast({ open: true, message: 'Member updated!', type: 'success' });
+    setSuccessMsg('Member updated!');
     onUpdate();
   };
 
@@ -37,7 +37,7 @@ export default function ManageMembers({ members, onUpdate }) {
     if (!confirmDelete) return;
     await api.deleteMember(confirmDelete.id);
     setConfirmDelete(null);
-    setToast({ open: true, message: `${confirmDelete.name} removed from team`, type: 'info' });
+    setSuccessMsg(`${confirmDelete.name} removed from team`);
     onUpdate();
   };
 
@@ -110,7 +110,7 @@ export default function ManageMembers({ members, onUpdate }) {
         onCancel={() => setConfirmDelete(null)}
       />
 
-      <Toast {...toast} onClose={() => setToast(prev => ({ ...prev, open: false }))} />
+      <SuccessModal open={!!successMsg} message={successMsg} onClose={() => setSuccessMsg('')} />
     </div>
   );
 }

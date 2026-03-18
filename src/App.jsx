@@ -6,6 +6,7 @@ import AddExpense from './components/AddExpense';
 import ExpenseList from './components/ExpenseList';
 import MonthlySummary from './components/MonthlySummary';
 import ExcelManager from './components/ExcelManager';
+import Loader from './components/Loader';
 
 const COMPANY_DAILY_BUDGET = 500;
 
@@ -22,12 +23,20 @@ function App() {
   const [activeTab, setActiveTab] = useState('add');
   const [members, setMembers] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const loadData = async () => {
-    const m = await api.getMembers();
-    const e = await api.getExpenses();
-    setMembers(m);
-    setExpenses(e);
+    setLoading(true);
+    try {
+      const m = await api.getMembers();
+      const e = await api.getExpenses();
+      setMembers(m);
+      setExpenses(e);
+    } catch (err) {
+      console.error('Failed to load data:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -94,14 +103,15 @@ function App() {
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {activeTab === 'add' && (
+        {loading && <Loader message="Fetching data..." />}
+        {!loading && activeTab === 'add' && (
           <AddExpense
             members={members}
             budget={COMPANY_DAILY_BUDGET}
             onSaved={loadData}
           />
         )}
-        {activeTab === 'history' && (
+        {!loading && activeTab === 'history' && (
           <ExpenseList
             expenses={expenses}
             members={members}
@@ -109,21 +119,21 @@ function App() {
             onDelete={loadData}
           />
         )}
-        {activeTab === 'summary' && (
+        {!loading && activeTab === 'summary' && (
           <MonthlySummary
             expenses={expenses}
             members={members}
             budget={COMPANY_DAILY_BUDGET}
           />
         )}
-        {activeTab === 'data' && (
+        {!loading && activeTab === 'data' && (
           <ExcelManager
             expenses={expenses}
             members={members}
             onImport={loadData}
           />
         )}
-        {activeTab === 'members' && (
+        {!loading && activeTab === 'members' && (
           <ManageMembers members={members} onUpdate={loadData} />
         )}
       </main>

@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import * as api from '../api/sheets';
-import Toast from './Toast';
+import SuccessModal from './SuccessModal';
 import ConfirmModal from './ConfirmModal';
 
 export default function ExcelManager({ expenses, members, onImport }) {
   const fileRef = useRef();
-  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
+  const [successMsg, setSuccessMsg] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingData, setPendingData] = useState(null);
 
@@ -14,7 +14,7 @@ export default function ExcelManager({ expenses, members, onImport }) {
 
   const exportToExcel = () => {
     if (expenses.length === 0) {
-      setToast({ open: true, message: 'No expenses to export', type: 'error' });
+      setSuccessMsg('No expenses to export');
       return;
     }
 
@@ -40,7 +40,7 @@ export default function ExcelManager({ expenses, members, onImport }) {
 
     const monthName = new Date().toLocaleString('en', { month: 'long', year: 'numeric' });
     XLSX.writeFile(wb, `SnackTracker_${monthName.replace(' ', '_')}.xlsx`);
-    setToast({ open: true, message: 'Excel file downloaded!', type: 'success' });
+    setSuccessMsg('Excel file downloaded!');
   };
 
   const handleFileSelect = (e) => {
@@ -56,7 +56,7 @@ export default function ExcelManager({ expenses, members, onImport }) {
         const memSheet = wb.Sheets['Members'];
 
         if (!expSheet || !memSheet) {
-          setToast({ open: true, message: 'Invalid file. Must have "Expenses" and "Members" sheets.', type: 'error' });
+          setSuccessMsg('Invalid file. Must have "Expenses" and "Members" sheets.');
           return;
         }
 
@@ -66,7 +66,7 @@ export default function ExcelManager({ expenses, members, onImport }) {
         setPendingData({ expenses: importedExpenses, members: importedMembers });
         setConfirmOpen(true);
       } catch {
-        setToast({ open: true, message: 'Failed to read Excel file', type: 'error' });
+        setSuccessMsg('Failed to read Excel file');
       }
     };
     reader.readAsArrayBuffer(file);
@@ -98,11 +98,11 @@ export default function ExcelManager({ expenses, members, onImport }) {
 
       await api.importData(importMembers, importExpenses);
 
-      setToast({ open: true, message: `Imported ${pendingData.expenses.length} expenses!`, type: 'success' });
+      setSuccessMsg(`Imported ${pendingData.expenses.length} expenses!`);
       setPendingData(null);
       onImport();
     } catch {
-      setToast({ open: true, message: 'Import failed. Check file format.', type: 'error' });
+      setSuccessMsg('Import failed. Check file format.');
     }
   };
 
@@ -154,7 +154,7 @@ export default function ExcelManager({ expenses, members, onImport }) {
         danger={false}
       />
 
-      <Toast {...toast} onClose={() => setToast(prev => ({ ...prev, open: false }))} />
+      <SuccessModal open={!!successMsg} message={successMsg} onClose={() => setSuccessMsg('')} />
     </>
   );
 }

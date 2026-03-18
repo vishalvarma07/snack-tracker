@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as api from '../api/sheets';
-import Toast from './Toast';
+import SuccessModal from './SuccessModal';
 
 export default function AddExpense({ members, budget, onSaved }) {
   const today = new Date().toISOString().split('T')[0];
@@ -9,7 +9,7 @@ export default function AddExpense({ members, budget, onSaved }) {
   const [amount, setAmount] = useState('');
   const [presentIds, setPresentIds] = useState(members.map(m => m.id));
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
+  const [success, setSuccess] = useState(false);
 
   // Keep presentIds in sync when members change
   if (members.length > 0 && presentIds.length === 0) {
@@ -41,7 +41,7 @@ export default function AddExpense({ members, budget, onSaved }) {
     setAmount('');
     setPaidBy('');
     setPresentIds(members.map(m => m.id));
-    setToast({ open: true, message: 'Expense saved successfully!', type: 'success' });
+    setSuccess(true);
     onSaved();
   };
 
@@ -167,7 +167,7 @@ export default function AddExpense({ members, budget, onSaved }) {
         </button>
       </form>
 
-      <Toast {...toast} onClose={() => setToast(prev => ({ ...prev, open: false }))} />
+      <SuccessModal open={success} title="Saved!" message="Expense recorded successfully." onClose={() => setSuccess(false)} />
     </>
   );
 }

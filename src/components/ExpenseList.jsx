@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import * as api from '../api/sheets';
 import ConfirmModal from './ConfirmModal';
-import Toast from './Toast';
+import SuccessModal from './SuccessModal';
 
 export default function ExpenseList({ expenses, members, budget, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [toast, setToast] = useState({ open: false, message: '', type: 'success' });
+  const [successMsg, setSuccessMsg] = useState('');
 
   const getMemberName = (id) => members.find(m => m.id === id)?.name || 'Unknown';
 
@@ -13,7 +13,7 @@ export default function ExpenseList({ expenses, members, budget, onDelete }) {
     if (!confirmDelete) return;
     await api.deleteExpense(confirmDelete);
     setConfirmDelete(null);
-    setToast({ open: true, message: 'Expense deleted', type: 'info' });
+    setSuccessMsg('Expense deleted');
     onDelete();
   };
 
@@ -98,7 +98,7 @@ export default function ExpenseList({ expenses, members, budget, onDelete }) {
         onCancel={() => setConfirmDelete(null)}
       />
 
-      <Toast {...toast} onClose={() => setToast(prev => ({ ...prev, open: false }))} />
+      <SuccessModal open={!!successMsg} message={successMsg} onClose={() => setSuccessMsg('')} />
     </>
   );
 }
