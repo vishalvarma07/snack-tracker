@@ -68,12 +68,34 @@ function handleGetMembers() {
   });
 }
 
+function formatDate(val) {
+  // Handle Google Sheets Date objects and strings
+  if (val instanceof Date) {
+    var y = val.getFullYear();
+    var m = ('0' + (val.getMonth() + 1)).slice(-2);
+    var d = ('0' + val.getDate()).slice(-2);
+    return y + '-' + m + '-' + d;
+  }
+  var s = String(val);
+  // If already YYYY-MM-DD, return as is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // Try parsing other formats
+  var parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    var y = parsed.getFullYear();
+    var m = ('0' + (parsed.getMonth() + 1)).slice(-2);
+    var d = ('0' + parsed.getDate()).slice(-2);
+    return y + '-' + m + '-' + d;
+  }
+  return s;
+}
+
 function handleGetExpenses() {
   var sheet = getSheet('Expenses');
   return sheetToJson(sheet).map(function(r) {
     return {
       id: Number(r.id),
-      date: String(r.date),
+      date: formatDate(r.date),
       paidBy: Number(r.paidBy),
       amount: Number(r.amount),
       presentMemberIds: String(r.presentMemberIds).split(',').map(Number).filter(function(n) { return !isNaN(n); }),
@@ -108,7 +130,10 @@ function handleAddExpense(payload) {
   var sheet = getSheet('Expenses');
   var id = getNextId(sheet);
   var data = payload.data;
-  sheet.appendRow([id, data.date, data.paidBy, data.amount, data.presentMemberIds.join(',')]);
+  var row = sheet.getLastRow() + 1;
+  sheet.appendRow([id, '', data.paidBy, data.amount, data.presentMemberIds.join(',')]);
+  // Set date as plain text to prevent Google Sheets auto-formatting
+  sheet.getRange(row, 2).setNumberFormat('@').setValue(data.date);
   return { id: id, date: data.date, paidBy: data.paidBy, amount: data.amount, presentMemberIds: data.presentMemberIds };
 }
 
