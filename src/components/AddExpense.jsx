@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { db } from '../db';
+import * as api from '../api/sheets';
 import Toast from './Toast';
 
 export default function AddExpense({ members, budget, onSaved }) {
@@ -31,7 +31,7 @@ export default function AddExpense({ members, budget, onSaved }) {
     if (!paidBy || !amount || presentCount === 0) return;
 
     setSaving(true);
-    await db.expenses.add({
+    await api.addExpense({
       date,
       paidBy: Number(paidBy),
       amount: Number(amount),

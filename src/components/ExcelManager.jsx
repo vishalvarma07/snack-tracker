@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { db } from '../db';
+import * as api from '../api/sheets';
 import Toast from './Toast';
 import ConfirmModal from './ConfirmModal';
 
@@ -78,32 +78,25 @@ export default function ExcelManager({ expenses, members, onImport }) {
     if (!pendingData) return;
 
     try {
-      // Clear existing data
-      await db.members.clear();
-      await db.expenses.clear();
+      // Build members list
+      const importMembers = pendingData.members.map(m => ({ name: m.Name }));
 
-      // Import members first
-      const memberMap = {};
-      for (const m of pendingData.members) {
-        const id = await db.members.add({ name: m.Name });
-        memberMap[m.Name] = id;
-      }
+      // Build expenses — resolve names to temporary placeholders
+      // The server-side importData will handle ID assignment
+      const memberNameToIndex = {};
+      importMembers.forEach((m, i) => { memberNameToIndex[m.name] = i; });
 
-      // Import expenses
-      for (const row of pendingData.expenses) {
+      const importExpenses = pendingData.expenses.map(row => {
         const presentNames = row['Present Members'].split(',').map(s => s.trim());
-        const presentIds = presentNames.map(n => memberMap[n]).filter(Boolean);
-        const payerId = memberMap[row['Paid By']];
+        return {
+          date: row.Date,
+          paidBy: row['Paid By'],
+          amount: Number(row.Amount),
+          presentMemberIds: presentNames,
+        };
+      });
 
-        if (payerId && presentIds.length > 0) {
-          await db.expenses.add({
-            date: row.Date,
-            paidBy: payerId,
-            amount: Number(row.Amount),
-            presentMemberIds: presentIds,
-          });
-        }
-      }
+      await api.importData(importMembers, importExpenses);
 
       setToast({ open: true, message: `Imported ${pendingData.expenses.length} expenses!`, type: 'success' });
       setPendingData(null);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db, seedMembers } from './db';
+import * as api from './api/sheets';
 import Login from './components/Login';
 import ManageMembers from './components/ManageMembers';
 import AddExpense from './components/AddExpense';
@@ -24,9 +24,8 @@ function App() {
   const [expenses, setExpenses] = useState([]);
 
   const loadData = async () => {
-    await seedMembers(['Member 1', 'Member 2', 'Member 3', 'Member 4', 'Member 5']);
-    const m = await db.members.toArray();
-    const e = await db.expenses.orderBy('date').reverse().toArray();
+    const m = await api.getMembers();
+    const e = await api.getExpenses();
     setMembers(m);
     setExpenses(e);
   };

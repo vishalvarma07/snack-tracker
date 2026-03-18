@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { db } from '../db';
+import * as api from '../api/sheets';
 import ConfirmModal from './ConfirmModal';
 import Toast from './Toast';
 
@@ -11,7 +11,7 @@ export default function ExpenseList({ expenses, members, budget, onDelete }) {
 
   const handleDeleteConfirm = async () => {
     if (!confirmDelete) return;
-    await db.expenses.delete(confirmDelete);
+    await api.deleteExpense(confirmDelete);
     setConfirmDelete(null);
     setToast({ open: true, message: 'Expense deleted', type: 'info' });
     onDelete();

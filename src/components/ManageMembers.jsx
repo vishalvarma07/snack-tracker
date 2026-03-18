@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { db } from '../db';
+import * as api from '../api/sheets';
 import ConfirmModal from './ConfirmModal';
 import Toast from './Toast';
 
@@ -13,7 +13,7 @@ export default function ManageMembers({ members, onUpdate }) {
   const addMember = async () => {
     const name = newName.trim();
     if (!name) return;
-    await db.members.add({ name });
+    await api.addMember(name);
     setNewName('');
     setToast({ open: true, message: `${name} added to team!`, type: 'success' });
     onUpdate();
@@ -26,7 +26,7 @@ export default function ManageMembers({ members, onUpdate }) {
 
   const saveEdit = async () => {
     if (!editName.trim()) return;
-    await db.members.update(editingId, { name: editName.trim() });
+    await api.updateMember(editingId, editName.trim());
     setEditingId(null);
     setEditName('');
     setToast({ open: true, message: 'Member updated!', type: 'success' });
@@ -35,7 +35,7 @@ export default function ManageMembers({ members, onUpdate }) {
 
   const handleDeleteConfirm = async () => {
     if (!confirmDelete) return;
-    await db.members.delete(confirmDelete.id);
+    await api.deleteMember(confirmDelete.id);
     setConfirmDelete(null);
     setToast({ open: true, message: `${confirmDelete.name} removed from team`, type: 'info' });
     onUpdate();
