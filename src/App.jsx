@@ -21,23 +21,34 @@ const TABS = [
 function App() {
   const [loggedIn, setLoggedIn] = useState(() => sessionStorage.getItem('snack_auth') === 'true');
   const [activeTab, setActiveTab] = useState('add');
-  const [members, setMembers] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const [members, setMembers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('st_members') || '[]'); } catch { return []; }
+  });
+  const [expenses, setExpenses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('st_expenses') || '[]'); } catch { return []; }
+  });
   const [loading, setLoading] = useState(false);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async ({ silent = false } = {}) => {
+    if (!silent) {
+      const hasCache = members.length > 0 || expenses.length > 0;
+      if (!hasCache) setLoading(true);
+    }
     try {
       const m = await api.getMembers();
       const e = await api.getExpenses();
       setMembers(m);
       setExpenses(e);
+      localStorage.setItem('st_members', JSON.stringify(m));
+      localStorage.setItem('st_expenses', JSON.stringify(e));
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  const refreshData = () => loadData({ silent: true });
 
   useEffect(() => {
     if (loggedIn) loadData();
@@ -108,7 +119,7 @@ function App() {
           <AddExpense
             members={members}
             budget={COMPANY_DAILY_BUDGET}
-            onSaved={loadData}
+            onSaved={refreshData}
           />
         )}
         {!loading && activeTab === 'history' && (
@@ -116,7 +127,7 @@ function App() {
             expenses={expenses}
             members={members}
             budget={COMPANY_DAILY_BUDGET}
-            onDelete={loadData}
+            onDelete={refreshData}
           />
         )}
         {!loading && activeTab === 'summary' && (
@@ -130,11 +141,11 @@ function App() {
           <ExcelManager
             expenses={expenses}
             members={members}
-            onImport={loadData}
+            onImport={refreshData}
           />
         )}
         {!loading && activeTab === 'members' && (
-          <ManageMembers members={members} onUpdate={loadData} />
+          <ManageMembers members={members} onUpdate={refreshData} />
         )}
       </main>
     </div>
